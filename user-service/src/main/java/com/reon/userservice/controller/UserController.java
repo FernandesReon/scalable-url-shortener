@@ -97,4 +97,17 @@ public class UserController {
                         "Account deleted successfully"
                 ));
     }
+
+    @PostMapping("/url/increase-count")
+    public ResponseEntity<ApiResponse<Void>> increaseUrlCount(@RequestParam("userId") String userId) {
+        log.info("Updating url count");
+        userService.incrementUrlCountForUser(userId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.of(
+                        HttpStatus.OK,
+                        "Url count updated"
+                ));
+    }
 }

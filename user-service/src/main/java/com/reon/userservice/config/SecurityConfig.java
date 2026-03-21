@@ -26,13 +26,14 @@ public class SecurityConfig {
 
     public String[] publicUrls = {
             "/api/v1/user/register",
-            "/api/v1/user/login"
+            "/api/v1/user/login",
+            "/api/v1/user/url/**"
     };
 
     public String[] protectedUrls = {
             "/api/v1/user/me",
             "/api/v1/user/me/update",
-            "/api/v1/user/me/delete",
+            "/api/v1/user/me/delete"
     };
 
     @Bean
