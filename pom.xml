@@ -78,6 +78,7 @@
         <module>discovery-server</module>
         <module>common-lib</module>
         <module>user-service</module>
+        <module>url-service</module>
     </modules>
 
 </project>
