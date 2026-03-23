@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "urlmappings")
+@Table(name = "url_mappings")
 @Getter
 @Setter
 @AllArgsConstructor
