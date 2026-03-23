@@ -1,6 +1,7 @@
 package com.reon.urlservice.controller;
 
 import com.reon.exception.response.ApiResponse;
+import com.reon.urlservice.dto.UpdateUrlRequest;
 import com.reon.urlservice.dto.UrlRequest;
 import com.reon.urlservice.dto.response.UrlListResponse;
 import com.reon.urlservice.dto.response.UrlResponse;
@@ -41,20 +42,6 @@ public class UrlController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @DeleteMapping("/delete-url")
-    public ResponseEntity<ApiResponse<Void>> deleteUrl(@RequestParam("urlId") Long urlId) {
-        log.info("Request for deleting url: {}", urlId);
-        urlService.deleteUrl(urlId);
-
-        return ResponseEntity
-                .status(HttpStatus.NO_CONTENT)
-                .body(ApiResponse.of(
-                        HttpStatus.NO_CONTENT,
-                        "URL deleted successfully"
-                ));
-    }
-
-    @PreAuthorize("hasRole('USER')")
     @GetMapping("/my-urls")
     public ResponseEntity<ApiResponse<Page<UrlListResponse>>> fetchAllUrls(
             @RequestParam(name = "page", defaultValue = "1") int page,
@@ -70,4 +57,35 @@ public class UrlController {
                         urlListResponses
                 ));
     }
+
+    @PreAuthorize("hasRole('USER')")
+    @PatchMapping("/update-url")
+    public ResponseEntity<ApiResponse<UrlResponse>> updateUrl(@RequestParam(name = "urlId") Long urlId,
+                                                              @Valid @RequestBody UpdateUrlRequest updateUrlRequest) {
+        log.info("Update url request: {}", urlId);
+        urlService.updateShortenedUrl(urlId, updateUrlRequest);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.of(
+                        HttpStatus.OK,
+                        "URL Updated successfully."
+                ));
+    }
+
+
+    @PreAuthorize("hasRole('USER')")
+    @DeleteMapping("/delete-url")
+    public ResponseEntity<ApiResponse<Void>> deleteUrl(@RequestParam("urlId") Long urlId) {
+        log.info("Request for deleting url: {}", urlId);
+        urlService.deleteUrl(urlId);
+
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .body(ApiResponse.of(
+                        HttpStatus.NO_CONTENT,
+                        "URL deleted successfully"
+                ));
+    }
+
 }

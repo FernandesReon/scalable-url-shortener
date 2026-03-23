@@ -1,9 +1,11 @@
 package com.reon.urlservice.service.impl;
 
 import com.reon.exception.AliasAlreadyTakenException;
+import com.reon.exception.UnauthorizedUrlAccessException;
 import com.reon.exception.UrlNotFoundException;
 import com.reon.exception.UrlQuotaExceededException;
 import com.reon.urlservice.common.Base62Encoder;
+import com.reon.urlservice.dto.UpdateUrlRequest;
 import com.reon.urlservice.dto.UrlRequest;
 import com.reon.urlservice.dto.response.UrlListResponse;
 import com.reon.urlservice.dto.response.UrlResponse;
@@ -25,6 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -91,14 +94,22 @@ public class UrlServiceImpl implements UrlService {
 
     @Override
     public void deleteUrl(Long urlId) {
-        log.info("URL Service :: Deleting url with id: {}", urlId);
-        UrlMapping url = urlRepository.findById(String.valueOf(urlId)).orElseThrow(
-                () -> new UrlNotFoundException("URL not found with id: " + urlId)
-        );
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (url != null) {
-            urlRepository.delete(url);
-            urlClient.decreaseUrlCount(url.getUserId());
+        if (authentication != null) {
+            log.info("URL Service :: Deleting url with id: {}", urlId);
+            UrlMapping url = urlRepository.findById(String.valueOf(urlId)).orElseThrow(
+                    () -> new UrlNotFoundException("URL not found with id: " + urlId)
+            );
+
+            String userId = (String) authentication.getPrincipal();
+
+            if (url != null && userId.equals(url.getUserId())) {
+                urlRepository.delete(url);
+                urlClient.decreaseUrlCount(url.getUserId());
+            } else {
+                throw new UnauthorizedUrlAccessException();
+            }
         }
     }
 
@@ -125,6 +136,70 @@ public class UrlServiceImpl implements UrlService {
                 .build();
 
         return new PageImpl<>(List.of(urlListResponse), pageable, mappings.getTotalElements());
+    }
+
+    @Override
+    public void updateShortenedUrl(Long urlId, UpdateUrlRequest updateUrlRequest) {
+        /**
+         * Updates an existing shortened URL.
+         *   - This operation is allowed only for authenticated users.
+         * Service accessible only if the user is loggedIn (authenticated)
+         * Flow:
+         * 1. Retrieve the current Authentication from the SecurityContext.
+         * 2. Validate that the request is authenticated.
+         * 3. Extract the userId (principal) from the Authentication object.
+         * 4. Fetch the UrlMapping entity using the provided urlId.
+         * 5. Verify ownership:
+         *      - Ensure the authenticated userId matches the userId associated with the UrlMapping.
+         *      - If not, deny access by throwing an exception.
+         * 6. If validation passes, update only the fields provided in the request.
+         */
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null) {
+
+            String userId = (String) authentication.getPrincipal();
+
+            UrlMapping urlMapping = urlRepository.findById(String.valueOf(urlId)).orElseThrow(
+                    () -> new UrlNotFoundException("URL not found with id: " + urlId)
+            );
+
+            if (!urlMapping.getUserId().equals(userId)) {
+                throw new UnauthorizedUrlAccessException();
+            }
+
+            if (updateUrlRequest.title() != null && !updateUrlRequest.title().isBlank()) {
+                urlMapping.setTitle(updateUrlRequest.title());
+            }
+
+            if (updateUrlRequest.longUrl() != null && !updateUrlRequest.longUrl().isBlank()) {
+                urlMapping.setLongUrl(updateUrlRequest.longUrl());
+            }
+
+            if (updateUrlRequest.customAlias() != null && !updateUrlRequest.customAlias().isBlank()) {
+                String alias = updateUrlRequest.customAlias();
+
+                if (!alias.equals(urlMapping.getShortCode()) && urlRepository.existsByShortCode(alias)) {
+                    log.info("Custom Alias: {} already taken", alias);
+                    throw new AliasAlreadyTakenException("Custom alias not available.");
+                }
+                urlMapping.setShortCode(alias);
+            }
+
+            if (updateUrlRequest.expiresAt() != null) {
+                urlMapping.setExpiresAt(updateUrlRequest.expiresAt());
+            }
+
+            if (updateUrlRequest.password() != null && !updateUrlRequest.password().isBlank()) {
+                String hashed = encoder.encode(updateUrlRequest.password());
+                urlMapping.setPasswordHash(hashed);
+            }
+
+            urlRepository.save(urlMapping);
+
+            log.info("URL Service :: Updated URL with id: {}", urlId);
+        }
     }
 
     // helper methods
