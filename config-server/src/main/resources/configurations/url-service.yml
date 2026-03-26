@@ -14,7 +14,19 @@ spring:
             hibernate:
                 dialect: org.hibernate.dialect.MySQLDialect
                 format_sql: true
+    data:
+        redis:
+            host: localhost
+            port: 6379
+            database: 0
+            timeout: 2000ms
 
+            lettuce:
+                pool:
+                    max-active: 20
+                    max-idle: 8
+                    min-idle: 2
+                    max-wait: 1000ms
 eureka:
     client:
         service-url:
@@ -33,3 +45,5 @@ security:
         quota:
             free-tier-limit: 50
             premium-tier-limit: 500
+        cache:
+            url-ttl-minutes: 60
