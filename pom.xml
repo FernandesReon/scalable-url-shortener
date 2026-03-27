@@ -79,6 +79,7 @@
         <module>common-lib</module>
         <module>user-service</module>
         <module>url-service</module>
+        <module>notification-service</module>
     </modules>
 
 </project>
