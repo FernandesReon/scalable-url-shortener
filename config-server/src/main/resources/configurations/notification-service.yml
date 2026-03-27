@@ -1,0 +1,27 @@
+server:
+    port: 8104
+
+spring:
+    mail:
+        username: reonjervasiofernandes@gmail.com
+        password: jqcaehkyoiyhcjbm
+        host: smtp.gmail.com
+        port: 587
+        default-encoding: UTF-8
+        properties:
+            mail:
+                smtp:
+                    auth: true
+                    starttls:
+                        enable: true
+                        required: true
+                    connectiontimeout: 5000
+                    timeout: 3000
+                    writetimeout: 5000
+
+eureka:
+    client:
+        service-url:
+            defaultZone: http://localhost:8500/eureka/
+    instance:
+        prefer-ip-address: true
