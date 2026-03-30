@@ -1,0 +1,26 @@
+server:
+    port: 8080
+
+spring:
+    cloud:
+        gateway:
+            server:
+                webflux:
+                    default-filters: [ ]
+                    discovery:
+                        locator:
+                            enabled: false
+
+eureka:
+    client:
+        service-url:
+            defaultZone: http://localhost:8500/eureka/
+    instance:
+        prefer-ip-address: true
+
+
+security:
+    jwt:
+        secret-key: d3edffa82ec4cd4d4b83214c85275e2dfeefd1a335300139c4bfcf7702e4f141
+    cookie:
+        name: accessToken
