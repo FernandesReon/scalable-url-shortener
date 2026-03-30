@@ -122,19 +122,19 @@ public class UserServiceImpl implements UserService {
 
         if (user.isEmailVerified()) {
             log.info("User already verified: {}", email);
-            return;
+            throw new UserAlreadyVerifiedException("User is already verified");
         }
 
         String storedOtp = otpCache.getOtp(email);
 
-        if (!encoder.matches(otp, storedOtp)) {
-            log.warn("OTP is invalid");
-            throw new InvalidOtpException("OTP is invalid");
+        if (storedOtp == null) {
+            log.warn("OTP not found or expired for email: {}", email);
+            throw new OtpExpiredException("OTP has expired or does not exist");
         }
 
-        if (storedOtp == null) {
-            log.warn("OTP as expired.");
-            throw new OtpExpiredException("OTP as expired");
+        if (!encoder.matches(otp, storedOtp)) {
+            log.warn("Invalid OTP attempt for email: {}", email);
+            throw new InvalidOtpException("OTP is invalid");
         }
 
         userRepository.verifyEmail(user.getUserId());
