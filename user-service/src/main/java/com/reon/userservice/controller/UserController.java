@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -66,7 +65,6 @@ public class UserController {
                 ));
     }
 
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserProfile>> profile(){
         log.info("Fetching profile");
@@ -82,7 +80,6 @@ public class UserController {
                 );
     }
 
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PatchMapping("/me/update")
     public ResponseEntity<ApiResponse<Void>> updateProfile(@Valid @RequestBody UpdateProfileRequest request){
         log.info("Updating profile");
@@ -96,7 +93,6 @@ public class UserController {
                 ));
     }
 
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @DeleteMapping("/me/delete")
     public ResponseEntity<ApiResponse<Void>> deleteAccount(@RequestParam(name = "userId") String userId){
         log.info("Deleting account");

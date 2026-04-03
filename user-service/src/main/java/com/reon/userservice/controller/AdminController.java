@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,7 +21,6 @@ public class AdminController {
     }
 
     @PutMapping("/account/deactivate")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deactivateAccount(@RequestParam(name = "userId") String userId){
         log.info("Deactivating account");
         userService.deactivateAccount(userId);
@@ -36,7 +34,6 @@ public class AdminController {
     }
 
     @PutMapping("/account/activate")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> activateAccount(@RequestParam(name = "userId") String userId){
         log.info("Activating account");
         userService.activateAccount(userId);
@@ -50,7 +47,6 @@ public class AdminController {
     }
 
     @GetMapping(value = "/accounts")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Page<UserListResponse>>> getAccounts(@RequestParam(name = "page", defaultValue = "0") int pageNo,
                                                          @RequestParam(name = "size", defaultValue = "10") int pageSize) {
         log.info("Admin Controller :: Fetch all users → page = {}, size = {}", pageNo, pageSize);

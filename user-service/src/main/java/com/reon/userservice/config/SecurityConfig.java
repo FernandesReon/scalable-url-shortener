@@ -1,56 +1,31 @@
 package com.reon.userservice.config;
 
-import com.reon.userservice.jwt.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableMethodSecurity
 public class SecurityConfig {
-    private final JwtFilter jwtFilter;
-
-    public SecurityConfig(JwtFilter jwtFilter) {
-        this.jwtFilter = jwtFilter;
-    }
-
-    public String[] publicUrls = {
-            "/api/v1/user/register",
-            "/api/v1/user/login",
-            "/api/v1/user/verify-otp",
-            "/api/v1/user/url/**"
-    };
-
-    public String[] protectedUrls = {
-            "/api/v1/user/me",
-            "/api/v1/user/me/update",
-            "/api/v1/user/me/delete"
-    };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity security) {
         security
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable())
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizedHttpRequest -> authorizedHttpRequest
-                        .requestMatchers(publicUrls).permitAll()
-                        .requestMatchers(protectedUrls).authenticated()
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())
+                        .anyRequest().permitAll())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .logout(logout -> logout.disable())
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .logout(AbstractHttpConfigurer::disable);
         return security.build();
     }
 

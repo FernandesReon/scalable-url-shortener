@@ -20,6 +20,7 @@ import com.reon.userservice.service.CookieService;
 import com.reon.userservice.service.OtpCache;
 import com.reon.userservice.service.UserService;
 import com.reon.userservice.utils.OTPGenerator;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +65,7 @@ public class UserServiceImpl implements UserService {
     private final CookieService cookieService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final OtpCache otpCache;
+    private final HttpServletRequest httpRequest;
 
     public UserServiceImpl(
             @Value("${security.jwt.expiration-time}") Long expirationTime,
@@ -71,7 +73,7 @@ public class UserServiceImpl implements UserService {
             @Value("${security.cache.url-ttl-minutes}") Long duration,
             UserRepository userRepository, UserMapper userMapper, PasswordEncoder encoder, JwtService jwtService,
             AuthenticationManager authenticationManager, CookieService cookieService,
-            KafkaTemplate<String, Object> kafkaTemplate, OtpCache otpCache
+            KafkaTemplate<String, Object> kafkaTemplate, OtpCache otpCache, HttpServletRequest httpRequest
     ) {
         this.expirationTime = expirationTime;
         this.registerSuccessTopic = registerSuccessTopic;
@@ -84,6 +86,7 @@ public class UserServiceImpl implements UserService {
         this.cookieService = cookieService;
         this.kafkaTemplate = kafkaTemplate;
         this.otpCache = otpCache;
+        this.httpRequest = httpRequest;
     }
 
     @Override
@@ -181,49 +184,40 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserProfile fetchUserProfile() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null){
-            String loggedInUser = authentication.getName();
+        String userId = httpRequest.getHeader("X-User-Id");
+        if (userId == null) throw new UserNotFoundException("User not found.");
 
-            User user = userRepository.findByEmail(loggedInUser).orElseThrow(
-                    () -> new UserNotFoundException("User not found.")
-            );
-
-            if (loggedInUser != null){
-                return userMapper.profileResponse(user);
-            }
-        }
-        return null;
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new UserNotFoundException("User not found.")
+        );
+        return userMapper.profileResponse(user);
     }
 
     @Override
     public void updateUserProfile(UpdateProfileRequest request) {
-        if (request != null) {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null){
-                String loggedInUser = authentication.getName();
+        if (request == null) return;
 
-                User user = userRepository.findByEmail(loggedInUser).orElseThrow(
-                        () -> new UserNotFoundException("User not found.")
-                );
+        String userId = httpRequest.getHeader("X-User-Id");
+        if (userId == null) throw new UserNotFoundException("User not found.");
 
-                if (request.name() != null && !request.name().isBlank()){
-                    user.setName(request.name());
-                }
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new UserNotFoundException("User not found.")
+        );
 
-                if (request.newPassword() != null && !request.newPassword().isBlank()) {
-                    if (request.currentPassword() == null
-                            || !encoder.matches(request.currentPassword(), user.getPassword())) {
-                        throw new InvalidCredentialsException("Current password is incorrect");
-                    }
-                    user.setPassword(encoder.encode(request.newPassword()));
-                }
-
-                userRepository.save(user);
-                log.info("Profile updated: userId={}", user.getUserId());
-
-            }
+        if (request.name() != null && !request.name().isBlank()) {
+            user.setName(request.name());
         }
+
+        if (request.newPassword() != null && !request.newPassword().isBlank()) {
+            if (request.currentPassword() == null
+                    || !encoder.matches(request.currentPassword(), user.getPassword())) {
+                throw new InvalidCredentialsException("Current password is incorrect");
+            }
+            user.setPassword(encoder.encode(request.newPassword()));
+        }
+
+        userRepository.save(user);
+        log.info("Profile updated: userId={}", userId);
     }
 
     @Override
