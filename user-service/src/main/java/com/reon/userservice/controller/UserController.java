@@ -28,7 +28,9 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<RegistrationResponse>> generateNewUser(@Valid @RequestBody RegistrationRequest registrationRequest){
+        log.info("User Controller :: Incoming request for generating new user: {}", registrationRequest.email());
         RegistrationResponse response = userService.registerUser(registrationRequest);
+        log.info("User Controller :: Outgoing request: Account created success");
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.of(
@@ -41,7 +43,9 @@ public class UserController {
     @PostMapping("/verify-otp")
     public ResponseEntity<ApiResponse<Void>> otpVerification(@RequestParam(name = "email") String email,
                                                              @RequestParam(name = "otp") String otp) {
+        log.info("User Controller :: Incoming request for Otp verification: {}", email);
         userService.verifyOtp(email, otp);
+        log.info("User Controller :: Outgoing request: Account verified successfully");
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(ApiResponse.of(
@@ -53,8 +57,9 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> authentication(
             @Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response){
-        log.info("Authentication request for: {}", loginRequest.email());
+        log.info("User Controller :: Incoming authentication request for user: {}", loginRequest.email());
         LoginResponse userDetails = userService.authenticateUser(loginRequest, response);
+        log.info("User Controller :: Outgoing request: Authentication successful");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -67,8 +72,9 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserProfile>> profile(){
-        log.info("Fetching profile");
+        log.info("User Controller :: Incoming request for fetching profile");
         UserProfile profile = userService.fetchUserProfile();
+        log.info("User Controller :: Outgoing request: Profile fetched successfully");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -82,8 +88,9 @@ public class UserController {
 
     @PatchMapping("/me/update")
     public ResponseEntity<ApiResponse<Void>> updateProfile(@Valid @RequestBody UpdateProfileRequest request){
-        log.info("Updating profile");
+        log.info("User Controller :: Incoming request for updating profile");
         userService.updateUserProfile(request);
+        log.info("User Controller :: Outgoing request: Profile updated successfully");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -95,8 +102,9 @@ public class UserController {
 
     @DeleteMapping("/me/delete")
     public ResponseEntity<ApiResponse<Void>> deleteAccount(@RequestParam(name = "userId") String userId){
-        log.info("Deleting account");
+        log.warn("User Controller :: Incoming request for deleting account: {}", userId);
         userService.deleteAccount(userId);
+        log.warn("User Controller :: Outgoing request: Account deleted.");
 
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
@@ -108,8 +116,9 @@ public class UserController {
 
     @PostMapping("/url/increase-count")
     public ResponseEntity<ApiResponse<Void>> increaseUrlCount(@RequestParam("userId") String userId) {
-        log.info("Incrementing url count");
+        log.info("User Controller :: Incoming request for incrementing url count for user: {}", userId);
         userService.incrementUrlCountForUser(userId);
+        log.info("User Controller :: Outgoing request: Url count incremented");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -121,8 +130,9 @@ public class UserController {
 
     @PostMapping("/url/decrease-count")
     public ResponseEntity<ApiResponse<Void>> decreaseUrlCount(@RequestParam("userId") String userId) {
-        log.info("Decrementing url count");
+        log.info("User Controller :: Incoming request for decrementing url count");
         userService.decrementUrlCountForUser(userId);
+        log.info("User Controller :: Outgoing request: Url count decremented");
 
         return ResponseEntity
                 .status(HttpStatus.OK)

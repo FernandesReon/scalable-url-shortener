@@ -25,13 +25,13 @@ public class RedirectController {
     @GetMapping("/{shortCode}")
     public ResponseEntity<Void> redirectUser(@PathVariable(name = "shortCode") String shortCode,
                                              @RequestParam(name = "password", required = false) String password) {
-        log.info("Url Redirect Controller :: Incoming request for redirecting shortUrl: {}", shortCode);
+        log.info("Redirect Controller :: Incoming request for redirecting shortUrl: {}", shortCode);
 
         UrlResponse urlResponse = redirectService.redirectUserToOriginalUrl(new RedirectRequest(shortCode, password));
 
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(URI.create(urlResponse.longUrl()));
-        log.info("Url Redirect Controller :: Redirecting shortUrl: {}", shortCode);
+        log.info("Redirect Controller :: Outgoing request: Redirecting shortUrl: {}", shortCode);
 
         return ResponseEntity
                 .status(HttpStatus.FOUND)

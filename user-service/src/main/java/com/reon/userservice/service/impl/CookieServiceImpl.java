@@ -19,13 +19,15 @@ public class CookieServiceImpl implements CookieService {
 
     @Override
     public ResponseCookie accessTokenCookie(String accessToken) {
-        log.info("Generating cookie for access token...");
-        return ResponseCookie.from(cookieName, accessToken)
-                .httpOnly(false)
-                .secure(false)
+        log.info("Cookie Service :: Generating cookie for access token...");
+        ResponseCookie strict = ResponseCookie.from(cookieName, accessToken)
+                .httpOnly(true)
+                .secure(true)
                 .path("/")
                 .maxAge(cookieExpirationTime)
                 .sameSite("Strict")
                 .build();
+        log.info("Cookie Service :: Cookie for access token generated");
+        return strict;
     }
 }

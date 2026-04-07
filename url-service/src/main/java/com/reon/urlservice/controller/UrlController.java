@@ -25,10 +25,10 @@ public class UrlController {
     }
 
     @PostMapping("/new")
-    public ResponseEntity<ApiResponse<UrlResponse>> generateNewShortUrl(
-            @Valid @RequestBody UrlRequest urlRequest){
-        log.info("Short url creation request: {}", urlRequest.longUrl());
+    public ResponseEntity<ApiResponse<UrlResponse>> generateNewShortUrl(@Valid @RequestBody UrlRequest urlRequest){
+        log.info("Url Controller :: Incoming request for generating short url: {}", urlRequest.longUrl());
         UrlResponse shortUrl = urlService.shortenUrl(urlRequest);
+        log.info("Url Controller :: Outgoing request: Short url created");
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -44,7 +44,9 @@ public class UrlController {
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "10") int size
     ) {
+        log.info("Url Controller :: Incoming request for fetching urls from page: {} of size: {}", page, size);
         Page<UrlListResponse> urlListResponses = urlService.viewAllUrls(page, size);
+        log.info("Url Controller :: Outgoing request: Urls fetched");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -58,8 +60,9 @@ public class UrlController {
     @PatchMapping("/update-url")
     public ResponseEntity<ApiResponse<UrlResponse>> updateUrl(@RequestParam(name = "urlId") Long urlId,
                                                               @Valid @RequestBody UpdateUrlRequest updateUrlRequest) {
-        log.info("Update url request: {}", urlId);
+        log.info("Url Controller :: Incoming request to update url request: {}", urlId);
         urlService.updateShortenedUrl(urlId, updateUrlRequest);
+        log.info("Url Controller :: Outgoing request: Url updated");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -72,8 +75,9 @@ public class UrlController {
 
     @DeleteMapping("/delete-url")
     public ResponseEntity<ApiResponse<Void>> deleteUrl(@RequestParam("urlId") Long urlId) {
-        log.info("Request for deleting url: {}", urlId);
+        log.info("Url Controller :: Incoming request for deleting url: {}", urlId);
         urlService.deleteUrl(urlId);
+        log.info("Url Controller :: Outgoing request: Url deleted");
 
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
@@ -82,5 +86,4 @@ public class UrlController {
                         "URL deleted successfully"
                 ));
     }
-
 }

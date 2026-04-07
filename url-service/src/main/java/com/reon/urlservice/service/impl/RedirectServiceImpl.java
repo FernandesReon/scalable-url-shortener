@@ -5,7 +5,6 @@ import com.reon.urlservice.dto.CachedUrlDTO;
 import com.reon.urlservice.dto.RedirectRequest;
 import com.reon.urlservice.dto.response.UrlResponse;
 import com.reon.urlservice.mapper.UrlMapper;
-import com.reon.urlservice.model.UrlMapping;
 import com.reon.urlservice.respository.UrlRepository;
 import com.reon.urlservice.service.RedirectService;
 import com.reon.urlservice.service.UrlCacheService;
@@ -36,6 +35,7 @@ public class RedirectServiceImpl implements RedirectService {
     @Override
     @Transactional
     public UrlResponse redirectUserToOriginalUrl(RedirectRequest redirectRequest) {
+        log.info("Redirect Service :: Redirecting user to original url: {}", redirectRequest.shortCode());
         CachedUrlDTO url = urlCacheService.getOrLoad(
                 redirectRequest.shortCode(),
                 () -> urlRepository.findByShortCode(redirectRequest.shortCode())
@@ -61,7 +61,7 @@ public class RedirectServiceImpl implements RedirectService {
         }
 
         urlRepository.incrementClickCount(redirectRequest.shortCode());
-        log.info("Redirect Service :: Redirecting shortCode: {}", redirectRequest.shortCode());
+        log.info("Redirect Service :: Redirected to original url: shortCode: {}", redirectRequest.shortCode());
 
         // todo:: publish event - link.clicked
 

@@ -96,6 +96,8 @@ public class UserServiceImpl implements UserService {
             throw new EmailAlreadyExistsException("User already exists with this email");
         }
 
+        log.info("User Service :: Creating new user:{} profile", registrationRequest.email());
+
         User user = userMapper.mapToEntity(registrationRequest);
         user.setPassword(encoder.encode(registrationRequest.password()));
         user.setTier(Tier.FREE);
@@ -103,6 +105,7 @@ public class UserServiceImpl implements UserService {
         user.setRole(EnumSet.of(Role.USER));
 
         User saveUser = userRepository.save(user);
+        log.info("User Service :: Newly created user profile saved successfully: {}", registrationRequest.email());
 
         // generate otp
         String otp = OTPGenerator.generateOTP();
@@ -110,8 +113,10 @@ public class UserServiceImpl implements UserService {
         // save the generated otp in redis cache
         otpCache.storeOtp(otp, saveUser.getEmail(), duration);
 
+        log.info("User Service :: Publishing event for successful user registration: {}", registrationRequest.email());
         // publish event after successful registration: OTP [userId, name, email, otp]
         publishRegistrationEvent(saveUser, otp);
+        log.info("User Service :: Event published for successful user registration: {}", registrationRequest.email());
 
         return userMapper.mapToResponse(saveUser);
     }
@@ -119,6 +124,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void verifyOtp(String email, String otp) {
+
+        log.info("User Service :: Verifying Otp for user: {}", email);
+
         // fetch user
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -143,15 +151,16 @@ public class UserServiceImpl implements UserService {
         userRepository.verifyEmail(user.getUserId());
         userRepository.activateUser(user.getUserId());
 
-
         otpCache.deleteOtp(email);
 
-        log.info("Email verified successfully for userId: {}", user.getUserId());
+        log.info("User Service : Email verified successfully for userId: {}", user.getUserId());
     }
 
     @Override
     public LoginResponse authenticateUser(LoginRequest loginRequest, HttpServletResponse response) {
         try {
+            log.info("User Service :: Authenticating User: {}", loginRequest.email());
+
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password())
             );
@@ -168,6 +177,9 @@ public class UserServiceImpl implements UserService {
                         .expiresIn(expirationTime)
                         .build();
             }
+
+            log.info("User Service :: User authenticated successfully");
+
         } catch (DisabledException exception) {
             log.info("UserService :: Disabled exception");
             throw new DisabledException("Account is disabled");
@@ -184,12 +196,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserProfile fetchUserProfile() {
+        log.info("User Service :: Fetching User Profile");
+
         String userId = httpRequest.getHeader("X-User-Id");
         if (userId == null) throw new UserNotFoundException("User not found.");
 
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new UserNotFoundException("User not found.")
         );
+
+        log.info("User profile fetched");
         return userMapper.profileResponse(user);
     }
 
@@ -198,6 +214,8 @@ public class UserServiceImpl implements UserService {
         if (request == null) return;
 
         String userId = httpRequest.getHeader("X-User-Id");
+
+        log.info("User Service :: Updating user profile: {}", userId);
         if (userId == null) throw new UserNotFoundException("User not found.");
 
         User user = userRepository.findById(userId).orElseThrow(
@@ -217,59 +235,72 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.save(user);
-        log.info("Profile updated: userId={}", userId);
+        log.info("User Service :: Profile updated: userId={}", userId);
     }
 
     @Override
     public void deleteAccount(String userId) {
+        log.warn("User Service :: Deleting user profile: Id: {}", userId);
+
         User user = findIfUserIsActive(userId);
         if (user != null) {
             userRepository.delete(user);
             log.info("Account deleted: userId={}", userId);
         }
+        log.warn("User Service :: Profile deleted");
     }
 
     @Override
     @Transactional
     public void incrementUrlCountForUser(String userId) {
+        log.info("User Service :: Feign call: Incrementing Url count for user: {}", userId);
         User user = findIfUserIsActive(userId);
         if (user != null){
             userRepository.incrementUrlCount(user.getUserId());
         }
+        log.info("User Service :: Url count incremented");
     }
 
     @Override
     @Transactional
     public void decrementUrlCountForUser(String userId) {
+        log.info("User Service :: Feign call: Decrementing Url count for user: {}", userId);
+
         User user = findIfUserIsActive(userId);
         if (user != null){
             userRepository.decrementUserUrlCount(user.getUserId());
         }
+        log.info("User Service :: Url count decremented");
     }
 
     // admin specific methods
     @Override
     @Transactional
     public void deactivateAccount(String userId) {
+        log.info("User Service :: Deactivating user account: {}", userId);
         User user = findIfUserIsActive(userId);
         if (user != null){
             userRepository.deactivateUser(user.getUserId());
         }
+        log.info("User Service :: Account deactivated");
     }
 
     @Override
     @Transactional
     public void activateAccount(String userId) {
+        log.info("User Service :: Activating user account: {}", userId);
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new UserNotFoundException("User not found.")
         );
         if (user != null){
             userRepository.activateUser(user.getUserId());
         }
+        log.info("User Service :: Account Activated");
     }
 
     @Override
     public Page<UserListResponse> viewAllUsers(int pageNo, int pageSize) {
+        log.info("User Service :: Retrieving users info from page:{} of size:{}", pageNo, pageSize);
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
         Page<User> users = userRepository.findAll(pageable);
 
@@ -283,6 +314,7 @@ public class UserServiceImpl implements UserService {
                 .userProfileList(userResponse)
                 .build();
 
+        log.info("User Service :: Users data retrieval successful");
         return new PageImpl<>(List.of(userListResponse), pageable, userListResponse.total());
     }
 

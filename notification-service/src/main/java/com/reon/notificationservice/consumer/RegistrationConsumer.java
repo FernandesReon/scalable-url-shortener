@@ -22,7 +22,8 @@ public class RegistrationConsumer {
             groupId = "notify-group"
     )
     public void consumeRegistrationEvent(RegistrationSuccessEvent registrationSuccessEvent) {
-        log.info("Notification Service:: Consuming Registration Success Event");
+        log.info("Notification Service :: Consuming Registration Success Event");
         registrationMailService.sendMailToNewlyRegisteredUser(registrationSuccessEvent);
+        log.info("Notification Service :: Registration Success Event consumed");
     }
 }

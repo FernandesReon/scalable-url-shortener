@@ -22,8 +22,9 @@ public class AdminController {
 
     @PutMapping("/account/deactivate")
     public ResponseEntity<ApiResponse<Void>> deactivateAccount(@RequestParam(name = "userId") String userId){
-        log.info("Deactivating account");
+        log.warn("Admin Controller :: Incoming request for deactivating account: {}", userId);
         userService.deactivateAccount(userId);
+        log.warn("Admin Controller :: Outgoing request: Account deactivated");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -35,8 +36,9 @@ public class AdminController {
 
     @PutMapping("/account/activate")
     public ResponseEntity<ApiResponse<Void>> activateAccount(@RequestParam(name = "userId") String userId){
-        log.info("Activating account");
+        log.warn("Admin Controller :: Incoming request for Activating account: {}", userId);
         userService.activateAccount(userId);
+        log.warn("Admin Controller :: Outgoing request: Account Activated");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -49,8 +51,9 @@ public class AdminController {
     @GetMapping(value = "/accounts")
     public ResponseEntity<ApiResponse<Page<UserListResponse>>> getAccounts(@RequestParam(name = "page", defaultValue = "0") int pageNo,
                                                          @RequestParam(name = "size", defaultValue = "10") int pageSize) {
-        log.info("Admin Controller :: Fetch all users → page = {}, size = {}", pageNo, pageSize);
+        log.info("Admin Controller :: Incoming request for fetching all users → page = {}, size = {}", pageNo, pageSize);
         Page<UserListResponse> userProfiles = userService.viewAllUsers(pageNo, pageSize);
+        log.info("Admin Controller :: Outgoing request: Users info fetched");
 
         return ResponseEntity
                 .status(HttpStatus.OK)

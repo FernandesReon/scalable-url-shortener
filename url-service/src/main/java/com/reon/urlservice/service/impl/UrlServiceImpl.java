@@ -63,6 +63,7 @@ public class UrlServiceImpl implements UrlService {
 
     @Override
     public UrlResponse shortenUrl(UrlRequest urlRequest) {
+        log.info("URL Service :: Processing new short url generation");
         Map<String, String> userTier = checkForUserTier();
 
         String userId = userTier.get("userId");
@@ -100,7 +101,7 @@ public class UrlServiceImpl implements UrlService {
         String userId = httpRequest.getHeader("X-User-Id");
         if (userId == null) throw new UnauthorizedUrlAccessException();
 
-        log.info("URL Service :: Deleting url with id: {}", urlId);
+        log.warn("URL Service :: Deleting url with id: {}", urlId);
         UrlMapping url = urlRepository.findById(String.valueOf(urlId)).orElseThrow(
                 () -> new UrlNotFoundException("URL not found with id: " + urlId)
         );
@@ -112,6 +113,7 @@ public class UrlServiceImpl implements UrlService {
         } else {
             throw new UnauthorizedUrlAccessException();
         }
+        log.warn("URl Service :: Url deleted.");
     }
 
     @Override
@@ -134,6 +136,7 @@ public class UrlServiceImpl implements UrlService {
                 .urlResponseList(urlResponses)
                 .build();
 
+        log.info("Url Service :: Urls data retrieval successful");
         return new PageImpl<>(List.of(urlListResponse), pageable, mappings.getTotalElements());
     }
 
@@ -141,6 +144,8 @@ public class UrlServiceImpl implements UrlService {
     public void updateShortenedUrl(Long urlId, UpdateUrlRequest updateUrlRequest) {
         String userId = httpRequest.getHeader("X-User-Id");
         if (userId == null) throw new UnauthorizedUrlAccessException();
+
+        log.info("URL Service :: Updating url for user: {}", userId);
 
         UrlMapping urlMapping = urlRepository.findById(String.valueOf(urlId)).orElseThrow(
                 () -> new UrlNotFoundException("URL not found with id: " + urlId)
