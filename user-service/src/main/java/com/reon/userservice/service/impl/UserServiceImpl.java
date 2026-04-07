@@ -242,12 +242,17 @@ public class UserServiceImpl implements UserService {
     public void deleteAccount(String userId) {
         log.warn("User Service :: Deleting user profile: Id: {}", userId);
 
-        User user = findIfUserIsActive(userId);
-        if (user != null) {
-            userRepository.delete(user);
-            log.info("Account deleted: userId={}", userId);
+        String headerUserId = httpRequest.getHeader("X-User-Id");
+        if (headerUserId.equals(userId)) {
+            User user = findIfUserIsActive(userId);
+            if (user != null) {
+                userRepository.delete(user);
+                log.info("Account deleted: userId={}", userId);
+            }
+            log.warn("User Service :: Profile deleted");
+        } else {
+            throw new IllegalArgumentException("You cannot perform this operation.");
         }
-        log.warn("User Service :: Profile deleted");
     }
 
     @Override
