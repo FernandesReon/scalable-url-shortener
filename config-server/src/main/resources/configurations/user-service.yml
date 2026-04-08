@@ -55,5 +55,6 @@ security:
         topic:
             register: user.registered
             resend: resend.otp
+            deleted: user.deleted
     cache:
         url-ttl-minutes: 5
