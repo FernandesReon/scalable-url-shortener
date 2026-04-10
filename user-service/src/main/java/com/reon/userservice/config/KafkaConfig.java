@@ -13,12 +13,17 @@ public class KafkaConfig {
     private final String resendVerificationOtp;
     private final String userAccountDeleteTopic;
 
+    private final String adminStateTopic;
+
+
     public KafkaConfig(@Value("${security.kafka.topic.register}") String registerSuccessTopic,
                        @Value("${security.kafka.topic.resend}") String resendVerificationOtp,
-                       @Value("${security.kafka.topic.deleted}") String userAccountDeleteTopic) {
+                       @Value("${security.kafka.topic.deleted}") String userAccountDeleteTopic,
+                       @Value("${security.kafka.topic.admin.userState}") String adminStateTopic) {
         this.registerSuccessTopic = registerSuccessTopic;
         this.resendVerificationOtp = resendVerificationOtp;
         this.userAccountDeleteTopic = userAccountDeleteTopic;
+        this.adminStateTopic = adminStateTopic;
     }
 
     @Bean
@@ -42,6 +47,15 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic userDeletedTopic() {
+        return TopicBuilder
+                .name(userAccountDeleteTopic)
+                .partitions(4)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic adminUserState() {
         return TopicBuilder
                 .name(userAccountDeleteTopic)
                 .partitions(4)

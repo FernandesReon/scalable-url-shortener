@@ -1,5 +1,6 @@
 package com.reon.userservice.service.impl;
 
+import com.reon.events.AdminUserStateControlEvent;
 import com.reon.events.RegistrationSuccessEvent;
 import com.reon.events.UserAccountDeletedEvent;
 import com.reon.exception.*;
@@ -59,6 +60,8 @@ public class UserServiceImpl implements UserService {
     private final String registerSuccessTopic;
     private final String userAccountDeleteTopic;
 
+    private final String adminStateTopic;
+
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -75,6 +78,7 @@ public class UserServiceImpl implements UserService {
             @Value("${security.cache.url-ttl-minutes}") Long duration,
             @Value("${security.kafka.topic.register}") String registerSuccessTopic,
             @Value("${security.kafka.topic.deleted}") String userAccountDeleteTopic,
+            @Value("${security.kafka.topic.admin.userState}") String adminStateTopic,
             UserRepository userRepository, UserMapper userMapper, PasswordEncoder encoder, JwtService jwtService,
             AuthenticationManager authenticationManager, CookieService cookieService,
             KafkaTemplate<String, Object> kafkaTemplate, OtpCache otpCache, HttpServletRequest httpRequest
@@ -83,6 +87,7 @@ public class UserServiceImpl implements UserService {
         this.registerSuccessTopic = registerSuccessTopic;
         this.duration = duration;
         this.userAccountDeleteTopic = userAccountDeleteTopic;
+        this.adminStateTopic = adminStateTopic;
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.encoder = encoder;
@@ -295,6 +300,7 @@ public class UserServiceImpl implements UserService {
         User user = findIfUserIsActive(userId);
         if (user != null){
             userRepository.deactivateUser(user.getUserId());
+            publishUserStateEvent(userId);
         }
         log.info("User Service :: Account deactivated");
     }
@@ -308,6 +314,7 @@ public class UserServiceImpl implements UserService {
         );
         if (user != null){
             userRepository.activateUser(user.getUserId());
+            publishUserStateEvent(userId);
         }
         log.info("User Service :: Account Activated");
     }
@@ -369,6 +376,25 @@ public class UserServiceImpl implements UserService {
                 log.error("Kafka publish failed for userId: {}", userId, exception);
             } else {
                 log.info("Kafka event[delete] published successfully. topic: {}, partition: {}, offset: {}",
+                        result.getRecordMetadata().topic(),
+                        result.getRecordMetadata().partition(),
+                        result.getRecordMetadata().offset());
+            }
+        });
+    }
+
+    private void publishUserStateEvent(String userId) {
+        AdminUserStateControlEvent adminStateEvent = AdminUserStateControlEvent.builder()
+                .userId(userId)
+                .build();
+        CompletableFuture<SendResult<String, Object>> adminPublishedEvent =
+                kafkaTemplate.send(adminStateTopic, userId, adminStateEvent);
+
+        adminPublishedEvent.whenComplete((result, exception) -> {
+            if (exception != null) {
+                log.error("Kafka publish failed for userId: {}", userId, exception);
+            } else {
+                log.info("Kafka admin event published successfully. topic: {}, partition: {}, offset: {}",
                         result.getRecordMetadata().topic(),
                         result.getRecordMetadata().partition(),
                         result.getRecordMetadata().offset());
