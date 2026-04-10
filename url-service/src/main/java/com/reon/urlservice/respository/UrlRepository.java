@@ -42,7 +42,16 @@ public interface UrlRepository extends JpaRepository<UrlMapping, String> {
     @Query("UPDATE UrlMapping u SET u.clickCount = u.clickCount + 1 WHERE u.shortCode = :shortCode")
     void incrementClickCount(@Param("shortCode") String shortCode);
 
+    // for kafka events
     @Modifying
     @Query("DELETE FROM UrlMapping u WHERE u.userId = :userId")
     void deleteUserUrls(@Param("userId") String userId);
+
+    @Modifying
+    @Query("UPDATE UrlMapping u SET u.active = true WHERE u.userId = :userId")
+    void activateUserUrls(@Param("userId") String userId);
+
+    @Modifying
+    @Query("UPDATE UrlMapping u SET u.active = false WHERE u.userId = :userId")
+    void deactivateUserUrls(@Param("userId") String userId);
 }

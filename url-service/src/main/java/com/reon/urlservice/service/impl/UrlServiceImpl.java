@@ -120,6 +120,21 @@ public class UrlServiceImpl implements UrlService {
     }
 
     @Override
+    @Transactional
+    public void changeUrlState(String userId, boolean state) {
+        log.info("URL Service :: Processing Urls state");
+
+        if (state) {
+            log.info("URL Service :: Activating all urls for user: {}", userId);
+            urlRepository.activateUserUrls(userId);
+        } else {
+            log.info("URL Service :: Deactivating all urls for user: {}", userId);
+            urlRepository.deactivateUserUrls(userId);
+        }
+
+    }
+
+    @Override
     public Page<UrlListResponse> viewAllUrls(int page, int size) {
         String userId = httpRequest.getHeader("X-User-Id");
         if (userId == null) throw new UnauthorizedUrlAccessException();
