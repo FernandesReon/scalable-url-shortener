@@ -7,10 +7,17 @@ import com.reon.urlservice.dto.response.UrlResponse;
 import org.springframework.data.domain.Page;
 
 public interface UrlService {
+    // basic ops
     UrlResponse shortenUrl(UrlRequest urlRequest);
     Page<UrlListResponse> viewAllUrls(int page, int size);
     void updateShortenedUrl(Long urlId, UpdateUrlRequest updateUrlRequest);
     void deleteUrl(Long urlId);
 
+    // url specific
+
+
+
+    // kafka events
     void deleteUserUrls(String userId);
+    void changeUrlState(String userId, boolean state);
 }

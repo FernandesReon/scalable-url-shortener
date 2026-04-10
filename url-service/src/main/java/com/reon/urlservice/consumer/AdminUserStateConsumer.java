@@ -22,6 +22,7 @@ public class AdminUserStateConsumer {
     )
     public void consumeAdminEvent(AdminUserStateControlEvent adminEvent) {
         log.info("URL Service :: Consuming Admin User State Event");
+        urlService.changeUrlState(adminEvent.userId(), adminEvent.state());
         log.info("URL Service :: Event consumed.");
     }
 }
